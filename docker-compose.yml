@@ -1,0 +1,41 @@
+services:
+
+  foxglove-bridge:
+    build:
+      context: ./foxglove-bridge
+      dockerfile: Dockerfile.ros2
+    ports:
+      - "8765:8765"
+    restart: unless-stopped
+    networks:
+      - rosnet
+
+  lichtblick:
+    build:
+      context: ./lichtblick
+    ports:
+      - "8080:8080"
+    depends_on:
+      - foxglove-bridge      
+    environment:
+      - NODE_ENV=production
+    networks:
+      - rosnet
+    restart: unless-stopped
+
+  rosbag_player:
+    build: 
+      context: ./test
+    container_name: rosbag_player
+    depends_on:
+      - foxglove-bridge
+    volumes:
+      - ./test/:/usr/src/app/config/
+    environment:
+      - BAG_FILE_PATH=/usr/src/app/config/sample_bag.db3
+    networks:
+      - rosnet
+    restart: unless-stopped
+
+networks:
+  rosnet:
